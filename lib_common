@@ -1,0 +1,69 @@
+#!/bin/bash
+
+init_sudo()
+{
+    if [[ $EUID -ne 0 ]]; then
+        SUDO="sudo"
+        LOGIN=${USER}
+        UNSUDO=""
+    else
+        SUDO=""
+        LOGIN=$(who | awk '{print $1; exit}')
+        UNSUDO="sudo -u ${LOGIN}"
+    fi
+    USER_HOME=$( getent passwd "$LOGIN" | cut -d: -f6 )
+}
+
+print_error()
+{
+    echo $1 | perl -ne 'print STDERR'
+}
+
+read_secret()
+{
+    stty -echo
+    trap 'stty echo' EXIT
+
+    read "$@"
+
+    stty echo
+    trap - EXIT
+    echo
+}
+
+answer()
+{
+    local ANSW=$1
+	declare -n ANSW_RESULT=$2
+
+    local ANSW_="${ANSW} [Y/n]: "
+    read -p "${ANSW_}" ANSW_RESULT_
+    until [[ -z "$ANSW_RESULT_" || "$ANSW_RESULT_" =~ ^([YyNn]+|[Yy]+[Ee]+[Ss]+|[Nn]+[Oo]+)$ ]]; do
+        read -p "${ANSW_}" ANSW_RESULT_
+    done
+
+    if [[ ! "$ANSW_RESULT_" =~ ^([Nn]+|[Nn]+[Oo]+)$ ]]; then
+        ANSW_RESULT="Yes"
+    fi
+}
+
+any_key()
+{
+    read -p "(Press Enter to continue)" I_
+}
+
+input()
+{
+    local TITLE=$1
+    declare -n INPUT_RESULT=$2
+
+    local TITLE_="${TITLE}: "
+    read -p "${TITLE_}" INPUT_RESULT_
+    if [ $# -ge 3 ]; then # if input required!
+        until [[ -n "$INPUT_RESULT_" ]]; do
+            read -p "${TITLE_}" INPUT_RESULT_
+        done
+    fi
+
+    INPUT_RESULT=${INPUT_RESULT_}
+}

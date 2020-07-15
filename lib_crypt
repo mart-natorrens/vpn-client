@@ -1,0 +1,35 @@
+#!/bin/bash
+
+#ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+# ccrypt required (https://www.systutorials.com/docs/linux/man/1-ccrypt/)
+
+encrypt_folder()
+{
+        if [[ -d $1 && -f $2 ]]
+        then
+                find $1 -type f ! -name '*.~' -exec chmod 600 {} \;
+                find $1 -type f ! -name '*.~' -exec ccencrypt -k $2 -S .~ {} \; 
+        fi
+}
+
+decrypt_folder()
+{
+        if [[ -d $1 && -f $2 ]]
+        then
+                find $1 -type f -iname '*.~' -exec ccdecrypt -k $2 -S .~ {} \; 
+        fi
+}
+
+open_default_key()
+{
+        local KEY_PATH=${HOME}/.ssh/id_rsa
+        echo $(ssh-keygen -y -f ${KEY_PATH} 2>/dev/null)
+}
+
+cleanup_key()
+{
+        if [ -f $1 ]; then
+                dd if=/dev/urandom count=1 bs=1024 of=$1 2>/dev/null
+                rm -f $1
+        fi
+}
